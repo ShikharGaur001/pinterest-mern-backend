@@ -58,7 +58,13 @@ const getBoard = asyncHandler(async (req, res) => {
 
   const board = await boardModel
     .findById(req.params.boardid)
-    .populate("pins")
+    .populate({
+        path: "pins",
+        populate: {
+            path: "createdBy",
+            select: "-password"
+        }
+    })
     .populate({ path: "createdBy", select: "-password" })
     .populate({ path: "collaborators", select: "-password" });
   if (!board) {

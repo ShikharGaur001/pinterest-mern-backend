@@ -121,7 +121,11 @@ const savePin = asyncHandler(async (req, res) => {
     if (boardid !== undefined) {
       const board = await boardModel.findById(boardid);
 
-      if (board && user.boards.includes(boardid)) {
+      const isUserBoard = user.boards.some(
+        (userBoard) => userBoard._id.toString() === boardid
+      );
+
+      if (board && isUserBoard) {
         board.pins.push(pin._id);
         await board.save();
       } else {
