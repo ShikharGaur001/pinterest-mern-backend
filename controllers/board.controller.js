@@ -56,7 +56,11 @@ const getBoard = asyncHandler(async (req, res) => {
     throw new Error("Not authorized to access boards");
   }
 
-  const board = await boardModel.findById(req.params.boardid);
+  const board = await boardModel
+    .findById(req.params.boardid)
+    .populate("pins")
+    .populate({ path: "createdBy", select: "-password" })
+    .populate({ path: "collaborators", select: "-password" });
   if (!board) {
     res.status(404);
     throw new Error(`No board exists with id ${req.params.boardid}`);
