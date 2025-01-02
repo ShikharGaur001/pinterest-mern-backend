@@ -89,7 +89,12 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .findById(req.user.id)
     .populate("pins.createdPins")
     .populate("pins.savedPins")
-    .populate("boards")
+    .populate({
+      path: "boards",
+      populate: {
+        path: "pins",
+      },
+    })
     .populate({ path: "followers", select: "-password" })
     .populate({ path: "following", select: "-password" })
     .select("-password");
@@ -163,4 +168,10 @@ const followUser = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { registerUser, loginUser, getCurrentUser, followUser, getProfile };
+module.exports = {
+  registerUser,
+  loginUser,
+  getCurrentUser,
+  followUser,
+  getProfile,
+};
