@@ -110,7 +110,12 @@ const getProfile = asyncHandler(async (req, res) => {
     .findOne({ username: req.params.username })
     .populate("pins.createdPins")
     .populate("pins.savedPins")
-    .populate("publicBoards")
+    .populate({
+      path: "publicBoards",
+      populate: {
+        path: "pins",
+      },
+    })
     .populate({ path: "followers", select: "-password" })
     .populate({ path: "following", select: "-password" })
     .select("-password");
