@@ -70,12 +70,19 @@ const loginUser = asyncHandler(async (req, res) => {
     .populate("pins.savedPins")
     .populate("boards")
     .populate({ path: "followers", select: "-password" })
-    .populate({ path: "following", select: "-password" })
-    .select("-password");
+    .populate({ path: "following", select: "-password" });
 
   if (user && (await bcrypt.compare(password, user.password))) {
     res.status(200).json({
-      user,
+      user: {
+        _id: user._id,
+        email: user.email,
+        username: user.username,
+        fullname: {
+          firstname: user.firstname,
+          surname: user.surname,
+        },
+      },
       token: generateJWTtoken(user._id),
     });
   } else {

@@ -72,7 +72,7 @@ const getBoard = asyncHandler(async (req, res) => {
     throw new Error(`No board exists with id ${req.params.boardid}`);
   }
 
-  if (board.isSecret && board.createdBy.toString() !== user._id.toString()) {
+  if (board.isSecret && board.createdBy._id.toString() !== user._id.toString()) {
     res.status(403);
     throw new Error("Access denied: This board is secret");
   }
