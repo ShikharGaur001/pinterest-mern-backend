@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
       },
       surname: {
         type: String,
-        minlength: [3, "Surname must be at least 3 characters long"],
+        maxlength: [50, "Surname must be at most 50 characters long"],
       },
     },
     email: {
@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema(
     bio: {
       type: String,
       maxlength: [160, "Bio must be at most 160 characters long"],
-      default: " ",
+      default: "",
     },
     profileImage: {
       type: String,

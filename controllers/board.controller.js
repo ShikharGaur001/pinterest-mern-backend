@@ -59,20 +59,26 @@ const getBoard = asyncHandler(async (req, res) => {
   const board = await boardModel
     .findById(req.params.boardid)
     .populate({
-        path: "pins",
-        populate: {
-            path: "createdBy",
-            select: "-password"
-        }
+      path: "pins",
+      populate: {
+        path: "createdBy",
+        select: "-password",
+      },
     })
     .populate({ path: "createdBy", select: "-password" })
     .populate({ path: "collaborators", select: "-password" });
+
+  board.pins.reverse(); // Now the most recently added pin is first
+
   if (!board) {
     res.status(404);
     throw new Error(`No board exists with id ${req.params.boardid}`);
   }
 
-  if (board.isSecret && board.createdBy._id.toString() !== user._id.toString()) {
+  if (
+    board.isSecret &&
+    board.createdBy._id.toString() !== user._id.toString()
+  ) {
     res.status(403);
     throw new Error("Access denied: This board is secret");
   }

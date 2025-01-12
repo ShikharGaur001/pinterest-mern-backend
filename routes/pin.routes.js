@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { body } = require("express-validator");
+const uploadFile = require("../middlewares/multer.middleware");
 const {
   createPin,
   getPins,
@@ -19,15 +20,8 @@ const { protect } = require("../middlewares/auth.middleware");
 
 router.post(
   "/",
-  [
-    body("file.filename")
-      .notEmpty()
-      .withMessage("A pin must have an associated file"),
-    body("file.filetype")
-      .isIn(["image", "video", "audio"])
-      .withMessage("A file type is required"),
-  ],
   protect,
+  uploadFile,
   createPin
 );
 

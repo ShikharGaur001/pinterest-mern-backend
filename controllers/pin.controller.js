@@ -1,4 +1,6 @@
 const asyncHandler = require("express-async-handler");
+const getDataUrl = require("../utils/url.generator");
+const cloudinary = require("cloudinary").v2;
 const pinModel = require("../models/pin.model");
 const { validationResult } = require("express-validator");
 const userModel = require("../models/user.model");
@@ -12,7 +14,12 @@ const createPin = asyncHandler(async (req, res) => {
     throw new Error(JSON.stringify({ errors: errors.array() }));
   }
 
-  const { title, description, file, category, tags } = req.body;
+  const { title, description, category, tags } = req.body;
+
+  const file = req.file;
+  const fileUrl = getDataUrl(file);
+
+  const cloud = await cloudinary.uploader.upload(fileUrl.content);
 
   const user = await userModel.findById(req.user.id);
 
@@ -25,8 +32,9 @@ const createPin = asyncHandler(async (req, res) => {
     title: title || "",
     description: description || "",
     file: {
-      filename: file.filename,
-      filetype: file.filetype,
+      fileid: cloud.public_id,
+      fileurl: cloud.secure_url,
+      filetype: file.mimetype, // Ensure the filetype reference is correct
     },
     createdBy: user._id,
     category: category || "Other",
@@ -45,10 +53,10 @@ const createPin = asyncHandler(async (req, res) => {
 });
 
 const getPins = asyncHandler(async (req, res) => {
-  const pins = await pinModel.find().populate({
+  const pins = await pinModel.find().sort({ createdAt: 1 }).populate({
     path: "createdBy",
-    select: "-password"
-  })
+    select: "-password",
+  });
   res.status(200).json({ pins });
 });
 
@@ -99,7 +107,6 @@ const deletePin = asyncHandler(async (req, res) => {
 
 const savePin = asyncHandler(async (req, res) => {
   const user = await userModel.findById(req.user.id);
-
   const pin = await pinModel.findById(req.params.pinid);
 
   if (!user) {
@@ -109,38 +116,42 @@ const savePin = asyncHandler(async (req, res) => {
 
   if (!pin) {
     res.status(400);
-    throw new Error(`The pin with id ${req.params.pinid} does not exists`);
+    throw new Error(`The pin with id ${req.params.pinid} does not exist`);
   }
 
-  if (user.pins.savedPins.includes(pin._id)) {
-    res.status(409);
-    throw new Error("You have already saved this pin");
-  } else {
-    const { boardid } = req.body;
+  const { boardid } = req.body;
 
-    if (boardid !== undefined) {
-      const board = await boardModel.findById(boardid);
+  if (boardid !== undefined) {
+    const board = await boardModel.findById(boardid);
 
-      const isUserBoard = user.boards.some(
-        (userBoard) => userBoard._id.toString() === boardid
-      );
-
-      if (board && isUserBoard) {
-        board.pins.push(pin._id);
-        await board.save();
-      } else {
-        res.status(400);
-        throw new Error(`No board exists with id ${boardid}`);
-      }
+    if (!board) {
+      res.status(400);
+      throw new Error(`No board exists with id ${boardid}`);
     }
 
+    const isUserBoard = user.boards.some(
+      (userBoard) => userBoard._id.toString() === boardid
+    );
+
+    if (!isUserBoard) {
+      res.status(400);
+      throw new Error(`No board exists with id ${boardid}`);
+    }
+
+    if (!board.pins.includes(pin._id)) {
+      board.pins.push(pin._id);
+      await board.save();
+    }
+  }
+
+  if (!user.pins.savedPins.includes(pin._id)) {
     user.pins.savedPins.push(pin._id);
     await user.save();
     pin.savedBy.push(user._id);
     await pin.save();
-
-    res.status(200).json({ message: "Pin saved successfully" });
   }
+
+  res.status(200).json({ message: "Pin saved successfully" });
 });
 
 const createComment = asyncHandler(async (req, res) => {

@@ -13,15 +13,19 @@ const pinSchema = new mongoose.Schema(
       maxlength: [500, "Description cannot exceed 500 characters"],
     },
     file: {
-      filename: {
+      fileid: {
         type: String,
-        required: [true, "A pin must have an assoicated file"],
+        required: [true, "A pin must have an associated file"],
+      },
+      fileurl: {
+        type: String,
+        required: [true, "A pin must have the URL for the associated file"],
       },
       filetype: {
         type: String,
         required: [true, "A file type is required"],
-        enum: ["image", "video", "audio"],
-        default: "image",
+        enum: ["image/jpeg", "image/png", "image/gif", "video/mp4", "audio/mpeg"], // Fix the enum to handle MIME types
+        default: "image/jpeg",
       },
     },
     createdBy: {
